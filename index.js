@@ -244,34 +244,92 @@ const loginPage = `
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
   <style>
+    /* Dark mode variables */
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8fafc;
+      --text-primary: #1f2937;
+      --text-secondary: #6b7280;
+      --border-color: #e5e7eb;
+      --input-bg: #ffffff;
+      --card-bg: #ffffff;
+    }
+
+    [data-theme="dark"] {
+      --bg-primary: #111827;
+      --bg-secondary: #1f2937;
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --border-color: #374151;
+      --input-bg: #374151;
+      --card-bg: #1f2937;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
     .login-container {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
     }
+    
     .login-box {
       backdrop-filter: blur(8px);
-      background-color: rgba(255, 255, 255, 0.9);
+      background-color: var(--card-bg);
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      border: 1px solid var(--border-color);
     }
+    
     .btn-primary {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       transition: all 0.3s;
     }
+    
     .btn-primary:hover {
       transform: translateY(-2px);
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
+    
     .input-field {
       transition: all 0.3s;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--border-color);
+      background-color: var(--input-bg);
+      color: var(--text-primary);
     }
+    
     .input-field:focus {
       border-color: #667eea;
       box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
     }
+    
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .theme-toggle:hover {
+      background: var(--bg-secondary);
+    }
   </style>
 </head>
 <body class="login-container flex items-center justify-center">
+  <!-- Theme Toggle Button -->
+  <button id="themeToggle" class="theme-toggle" title="切换主题">
+    <i class="fas fa-moon" id="themeIcon"></i>
+  </button>
+  
   <div class="login-box p-8 rounded-xl w-full max-w-md">
     <div class="text-center mb-8">
       <h1 class="text-2xl font-bold text-gray-800"><i class="fas fa-calendar-check mr-2"></i>订阅管理系统</h1>
@@ -337,6 +395,30 @@ const loginPage = `
         button.disabled = false;
       }
     });
+
+    // Theme switching functionality
+    function initTheme() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      const themeToggle = document.getElementById('themeToggle');
+      const themeIcon = document.getElementById('themeIcon');
+      
+      function updateTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        localStorage.setItem('theme', theme);
+      }
+      
+      updateTheme(savedTheme);
+      
+      themeToggle.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        updateTheme(newTheme);
+      });
+    }
+    
+    // Initialize theme when page loads
+    initTheme();
   </script>
 </body>
 </html>
@@ -606,6 +688,54 @@ const adminPage = `
       </div>
     </div>
     
+    <!-- 搜索和筛选区域 -->
+    <div class="bg-white rounded-lg shadow-sm mb-4 p-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 items-end">
+        <div>
+          <label for="searchName" class="block text-sm font-medium text-gray-700 mb-1">搜索名称</label>
+          <div class="relative">
+            <input type="text" id="searchName" placeholder="输入订阅名称..."
+              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i class="fas fa-search text-gray-400"></i>
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <label for="filterCategory" class="block text-sm font-medium text-gray-700 mb-1">筛选类别</label>
+          <select id="filterCategory" 
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            <option value="">所有类别</option>
+          </select>
+        </div>
+        
+        <div>
+          <label for="filterStatus" class="block text-sm font-medium text-gray-700 mb-1">筛选状态</label>
+          <select id="filterStatus" 
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            <option value="">所有状态</option>
+            <option value="active">正常</option>
+            <option value="expiring">即将到期</option>
+            <option value="expired">已过期</option>
+            <option value="inactive">已暂停</option>
+          </select>
+        </div>
+        
+        <div class="flex space-x-2">
+          <button id="clearFilters" class="px-4 py-2 text-sm text-gray-600 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors">
+            <i class="fas fa-times mr-1"></i>清空筛选
+          </button>
+        </div>
+      </div>
+      
+      <!-- 搜索结果统计 -->
+      <div id="searchStats" class="mt-3 text-sm text-gray-600 hidden">
+        <i class="fas fa-info-circle mr-1"></i>
+        <span id="searchResultText"></span>
+      </div>
+    </div>
+    
     <div class="table-container bg-white rounded-lg overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full divide-y divide-gray-200 responsive-table">
@@ -634,6 +764,46 @@ const adminPage = `
         <tbody id="subscriptionsBody" class="bg-white divide-y divide-gray-200">
         </tbody>
         </table>
+      </div>
+      
+      <!-- 分页控件 -->
+      <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+        <div class="flex-1 flex justify-between sm:hidden">
+          <!-- 移动端分页 -->
+          <button id="prevPageMobile" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            上一页
+          </button>
+          <button id="nextPageMobile" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            下一页
+          </button>
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+          <div>
+            <p class="text-sm text-gray-700">
+              显示第 <span id="startRecord" class="font-medium">1</span> 到 <span id="endRecord" class="font-medium">10</span> 条，
+              共 <span id="totalRecords" class="font-medium">0</span> 条记录
+            </p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <select id="pageSize" class="border border-gray-300 rounded-md px-3 py-1 text-sm">
+              <option value="10">10条/页</option>
+              <option value="20">20条/页</option>
+              <option value="50">50条/页</option>
+              <option value="100">100条/页</option>
+            </select>
+            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+              <button id="prevPage" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <div id="pageNumbers" class="flex">
+                <!-- 页码按钮将在这里动态生成 -->
+              </div>
+              <button id="nextPage" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </nav>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1143,6 +1313,11 @@ function addLunarPeriod(lunar, periodValue, periodUnit) {
     }
 
     // 获取所有订阅并按到期时间排序
+    let allSubscriptions = [];
+    let filteredSubscriptions = [];
+    let currentPage = 1;
+    let pageSize = parseInt(localStorage.getItem('pageSize') || '10');
+    
     async function loadSubscriptions() {
       try {
         // 加载农历显示偏好
@@ -1160,18 +1335,174 @@ function addLunarPeriod(lunar, periodValue, periodUnit) {
         const response = await fetch('/api/subscriptions');
         const data = await response.json();
         
-        tbody.innerHTML = '';
+        // 按到期时间升序排序（最早到期的在前）
+        allSubscriptions = data.sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
         
-        if (data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">没有订阅数据</td></tr>';
-          return;
+        // 初始化筛选数据
+        filteredSubscriptions = [...allSubscriptions];
+        
+        // 初始化类别下拉框
+        initializeCategoryFilter();
+        
+        // 设置页面大小选择器
+        const pageSizeSelect = document.getElementById('pageSize');
+        if (pageSizeSelect && pageSizeSelect.value != pageSize) {
+          pageSizeSelect.value = pageSize.toString();
         }
         
-        // 按到期时间升序排序（最早到期的在前）
-        data.sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
+        renderCurrentPage();
         
-		//新增修改，添加日历类型
-        data.forEach(subscription => {
+      } catch (error) {
+        console.error('加载订阅数据失败:', error);
+        document.getElementById('subscriptionsBody').innerHTML = '<tr><td colspan="6" class="text-center py-4 text-red-500">加载失败，请刷新页面重试</td></tr>';
+      }
+    }
+    
+    // 初始化类别下拉框
+    function initializeCategoryFilter() {
+      const filterCategory = document.getElementById('filterCategory');
+      if (!filterCategory) return;
+      
+      // 获取所有唯一的类别
+      const categories = [...new Set(allSubscriptions.map(s => s.customType || '其他').filter(Boolean))];
+      categories.sort();
+      
+      // 清空现有选项（保留"所有类别"）
+      filterCategory.innerHTML = '<option value="">所有类别</option>';
+      
+      // 添加类别选项
+      categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        filterCategory.appendChild(option);
+      });
+    }
+    
+    // 应用搜索和筛选
+    function applyFilters() {
+      const searchName = document.getElementById('searchName').value.toLowerCase().trim();
+      const filterCategory = document.getElementById('filterCategory').value;
+      const filterStatus = document.getElementById('filterStatus').value;
+      
+      filteredSubscriptions = allSubscriptions.filter(subscription => {
+        // 名称搜索
+        if (searchName && !subscription.name.toLowerCase().includes(searchName)) {
+          return false;
+        }
+        
+        // 类别筛选
+        if (filterCategory && (subscription.customType || '其他') !== filterCategory) {
+          return false;
+        }
+        
+        // 状态筛选
+        if (filterStatus) {
+          const now = new Date();
+          const expiryDate = new Date(subscription.expiryDate);
+          const daysDiff = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+          
+          switch (filterStatus) {
+            case 'active':
+              if (!subscription.isActive || daysDiff < 0 || daysDiff <= (subscription.reminderDays || 7)) {
+                return false;
+              }
+              break;
+            case 'expiring':
+              if (!subscription.isActive || daysDiff < 0 || daysDiff > (subscription.reminderDays || 7)) {
+                return false;
+              }
+              break;
+            case 'expired':
+              if (daysDiff >= 0) {
+                return false;
+              }
+              break;
+            case 'inactive':
+              if (subscription.isActive) {
+                return false;
+              }
+              break;
+          }
+        }
+        
+        return true;
+      });
+      
+      // 重置到第一页
+      currentPage = 1;
+      
+      // 更新搜索统计
+      updateSearchStats();
+      
+      // 重新渲染
+      renderCurrentPage();
+    }
+    
+    // 更新搜索统计信息
+    function updateSearchStats() {
+      const searchStats = document.getElementById('searchStats');
+      const searchResultText = document.getElementById('searchResultText');
+      
+      if (!searchStats || !searchResultText) return;
+      
+      const hasFilters = document.getElementById('searchName').value.trim() || 
+                        document.getElementById('filterCategory').value || 
+                        document.getElementById('filterStatus').value;
+      
+      if (hasFilters) {
+        searchStats.classList.remove('hidden');
+        searchResultText.textContent = '找到 ' + filteredSubscriptions.length + ' 个匹配的订阅，共 ' + allSubscriptions.length + ' 个订阅';
+      } else {
+        searchStats.classList.add('hidden');
+      }
+    }
+    
+    // 清空所有筛选条件
+    function clearAllFilters() {
+      document.getElementById('searchName').value = '';
+      document.getElementById('filterCategory').value = '';
+      document.getElementById('filterStatus').value = '';
+      
+      filteredSubscriptions = [...allSubscriptions];
+      currentPage = 1;
+      
+      updateSearchStats();
+      renderCurrentPage();
+    }
+    
+    function renderCurrentPage() {
+      try {
+        const tbody = document.getElementById('subscriptionsBody');
+        const listShowLunar = document.getElementById('listShowLunar');
+        tbody.innerHTML = '';
+        
+        if (filteredSubscriptions.length === 0) {
+          const hasFilters = document.getElementById('searchName').value.trim() || 
+                            document.getElementById('filterCategory').value || 
+                            document.getElementById('filterStatus').value;
+          if (hasFilters) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">没有匹配的订阅数据</td></tr>';
+          } else {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">没有订阅数据</td></tr>';
+          }
+          updatePaginationInfo(0, 0, 0);
+          updatePaginationButtons();
+          return;
+        }
+      
+      // 计算分页
+      const totalPages = Math.ceil(filteredSubscriptions.length / pageSize);
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = Math.min(startIndex + pageSize, filteredSubscriptions.length);
+      const pageSubscriptions = filteredSubscriptions.slice(startIndex, endIndex);
+      
+      // 更新分页信息
+      updatePaginationInfo(startIndex + 1, endIndex, filteredSubscriptions.length);
+      updatePaginationButtons(totalPages);
+      
+      //新增修改，添加日历类型
+        pageSubscriptions.forEach(subscription => {
           const row = document.createElement('tr');
           row.className = subscription.isActive === false ? 'hover:bg-gray-50 bg-gray-100' : 'hover:bg-gray-50';
           
@@ -1714,6 +2045,117 @@ console.log('expiry.toString():', expiry.toString());
         button.disabled = false;
       }
     }
+
+    // 分页控制函数
+    function updatePaginationInfo(start, end, total) {
+      const startRecord = document.getElementById('startRecord');
+      const endRecord = document.getElementById('endRecord');  
+      const totalRecords = document.getElementById('totalRecords');
+      
+      if (startRecord) startRecord.textContent = start;
+      if (endRecord) endRecord.textContent = end;
+      if (totalRecords) totalRecords.textContent = total;
+    }
+    
+    function updatePaginationButtons(totalPages = 1) {
+      const prevPage = document.getElementById('prevPage');
+      const nextPage = document.getElementById('nextPage');
+      const prevPageMobile = document.getElementById('prevPageMobile');
+      const nextPageMobile = document.getElementById('nextPageMobile');
+      
+      // 更新按钮状态
+      if (prevPage) prevPage.disabled = currentPage <= 1;
+      if (nextPage) nextPage.disabled = currentPage >= totalPages;
+      if (prevPageMobile) prevPageMobile.disabled = currentPage <= 1;
+      if (nextPageMobile) nextPageMobile.disabled = currentPage >= totalPages;
+      
+      // 生成页码按钮
+      const pageNumbers = document.getElementById('pageNumbers');
+      if (pageNumbers) {
+        pageNumbers.innerHTML = '';
+        
+        if (totalPages <= 1) return;
+        
+        // 计算显示的页码范围
+        let startPage, endPage;
+        if (totalPages <= 7) {
+          startPage = 1;
+          endPage = totalPages;
+        } else {
+          if (currentPage <= 4) {
+            startPage = 1;
+            endPage = 7;
+          } else if (currentPage >= totalPages - 3) {
+            startPage = totalPages - 6;
+            endPage = totalPages;
+          } else {
+            startPage = currentPage - 3;
+            endPage = currentPage + 3;
+          }
+        }
+        
+        // 生成页码按钮
+        for (let i = startPage; i <= endPage; i++) {
+          addPageButton(i, i === currentPage);
+        }
+      }
+    }
+    
+    function addPageButton(pageNum, isActive) {
+      const button = document.createElement('button');
+      button.className = 'relative inline-flex items-center px-4 py-2 border text-sm font-medium ' + (
+        isActive 
+          ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600' 
+          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+      );
+      button.textContent = pageNum;
+      button.onclick = () => goToPage(pageNum);
+      document.getElementById('pageNumbers').appendChild(button);
+    }
+    
+    function goToPage(page) {
+      const totalPages = Math.ceil(filteredSubscriptions.length / pageSize);
+      if (page >= 1 && page <= totalPages) {
+        currentPage = page;
+        renderCurrentPage();
+      }
+    }
+    
+    function changePageSize(newSize) {
+      pageSize = parseInt(newSize);
+      currentPage = 1;
+      localStorage.setItem('pageSize', newSize);
+      renderCurrentPage();
+    }
+
+    // 绑定分页事件
+    document.getElementById('prevPage')?.addEventListener('click', () => {
+      if (currentPage > 1) goToPage(currentPage - 1);
+    });
+    
+    document.getElementById('nextPage')?.addEventListener('click', () => {
+      const totalPages = Math.ceil(filteredSubscriptions.length / pageSize);
+      if (currentPage < totalPages) goToPage(currentPage + 1);
+    });
+    
+    document.getElementById('prevPageMobile')?.addEventListener('click', () => {
+      if (currentPage > 1) goToPage(currentPage - 1);
+    });
+    
+    document.getElementById('nextPageMobile')?.addEventListener('click', () => {
+      const totalPages = Math.ceil(filteredSubscriptions.length / pageSize);
+      if (currentPage < totalPages) goToPage(currentPage + 1);
+    });
+    
+    document.getElementById('pageSize')?.addEventListener('change', (e) => {
+      changePageSize(e.target.value);
+    });
+    
+    // 搜索和筛选事件监听器
+    document.getElementById('searchName')?.addEventListener('input', applyFilters);
+    document.getElementById('filterCategory')?.addEventListener('change', applyFilters);
+    document.getElementById('filterStatus')?.addEventListener('change', applyFilters);
+    document.getElementById('clearFilters')?.addEventListener('click', clearAllFilters);
     
     window.addEventListener('load', loadSubscriptions);
   </script>
@@ -1803,6 +2245,10 @@ const configPage = `
             <div>
               <label for="adminPassword" class="block text-sm font-medium text-gray-700">密码</label>
               <input type="password" id="adminPassword" placeholder="如不修改密码，请留空" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <div id="passwordStrength" class="mt-1 text-sm text-gray-600" style="display: none;">
+                <div class="text-xs">密码要求：至少8个字符，包含大小写字母、数字和特殊字符</div>
+                <div id="passwordErrors" class="text-red-500 mt-1"></div>
+              </div>
               <p class="mt-1 text-sm text-gray-500">留空表示不修改当前密码</p>
             </div>
           </div>
@@ -1996,12 +2442,23 @@ const configPage = `
           </div>
         </div>
 
-        <div class="flex justify-end">
+        <div class="flex justify-between">
+          <div class="space-x-4">
+            <button type="button" id="importDataBtn" class="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700">
+              <i class="fas fa-upload mr-2"></i>导入数据
+            </button>
+            <button type="button" id="exportDataBtn" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
+              <i class="fas fa-download mr-2"></i>导出数据
+            </button>
+          </div>
           <button type="submit" class="btn-primary text-white px-6 py-2 rounded-md text-sm font-medium">
             <i class="fas fa-save mr-2"></i>保存配置
           </button>
         </div>
       </form>
+      
+      <!-- 隐藏的文件输入 -->
+      <input type="file" id="importFileInput" accept=".json" style="display: none;">
     </div>
   </div>
 
@@ -2291,6 +2748,132 @@ const configPage = `
       testNotification('email');
     });
 
+    // 导出数据功能
+    document.getElementById('exportDataBtn').addEventListener('click', async () => {
+      try {
+        const response = await fetch('/admin/api/export', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'subsTracker-backup-' + new Date().toISOString().split('T')[0] + '.json';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          showToast('数据导出成功', 'success');
+        } else {
+          const error = await response.json();
+          showToast('导出失败: ' + error.message, 'error');
+        }
+      } catch (error) {
+        showToast('导出失败: ' + error.message, 'error');
+      }
+    });
+
+    // 导入数据功能
+    document.getElementById('importDataBtn').addEventListener('click', () => {
+      document.getElementById('importFileInput').click();
+    });
+
+    document.getElementById('importFileInput').addEventListener('change', async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        
+        // 验证数据格式
+        if (!data.subscriptions && !data.config) {
+          showToast('无效的数据格式', 'error');
+          return;
+        }
+
+        const response = await fetch('/admin/api/import', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+          showToast('数据导入成功，页面将自动刷新', 'success');
+          setTimeout(() => window.location.reload(), 2000);
+        } else {
+          const error = await response.json();
+          showToast('导入失败: ' + error.message, 'error');
+        }
+      } catch (error) {
+        showToast('文件格式错误: ' + error.message, 'error');
+      }
+      
+      // 清空文件选择
+      event.target.value = '';
+    });
+
+    // 密码强度验证
+    const passwordField = document.getElementById('adminPassword');
+    const passwordStrength = document.getElementById('passwordStrength');
+    const passwordErrors = document.getElementById('passwordErrors');
+    
+    function validatePasswordStrength(password) {
+      const errors = [];
+      
+      if (password.length > 0) { // 只在用户输入了密码时验证
+        if (password.length < 8) {
+          errors.push('至少8个字符');
+        }
+        if (!/[a-z]/.test(password)) {
+          errors.push('包含小写字母');
+        }
+        if (!/[A-Z]/.test(password)) {
+          errors.push('包含大写字母');
+        }
+        if (!/\d/.test(password)) {
+          errors.push('包含数字');
+        }
+        if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+          errors.push('包含特殊字符');
+        }
+      }
+      
+      return errors;
+    }
+    
+    passwordField.addEventListener('input', (e) => {
+      const password = e.target.value;
+      if (password.length > 0) {
+        passwordStrength.style.display = 'block';
+        const errors = validatePasswordStrength(password);
+        
+        if (errors.length > 0) {
+          passwordErrors.textContent = '缺少：' + errors.join('、');
+          passwordErrors.style.display = 'block';
+          passwordField.style.borderColor = '#ef4444';
+        } else {
+          passwordErrors.textContent = '✓ 密码强度符合要求';
+          passwordErrors.style.color = '#22c55e';
+          passwordErrors.style.display = 'block';
+          passwordField.style.borderColor = '#22c55e';
+        }
+      } else {
+        passwordStrength.style.display = 'none';
+        passwordField.style.borderColor = '#d1d5db';
+      }
+    });
+
     window.addEventListener('load', loadConfig);
   </script>
 </body>
@@ -2328,6 +2911,164 @@ const admin = {
         });
       }
 
+      // 导出数据API
+      if (pathname === '/admin/api/export' && request.method === 'GET') {
+        if (!user) {
+          return new Response('Unauthorized', { status: 401 });
+        }
+
+        try {
+          const subscriptions = await getAllSubscriptions(env);
+          const config = await getConfig(env);
+          
+          // 移除敏感信息
+          const { JWT_SECRET, ADMIN_PASSWORD, ...safeConfig } = config;
+          
+          const exportData = {
+            metadata: {
+              version: '2.0.0',
+              exportDate: new Date().toISOString(),
+              totalSubscriptions: subscriptions.length
+            },
+            subscriptions: subscriptions,
+            config: safeConfig
+          };
+
+          return new Response(JSON.stringify(exportData, null, 2), {
+            headers: { 
+              'Content-Type': 'application/json',
+              'Content-Disposition': `attachment; filename="subsTracker-backup-${new Date().toISOString().split('T')[0]}.json"`
+            }
+          });
+        } catch (error) {
+          console.error('[导出] 导出数据失败:', error);
+          return new Response(JSON.stringify({ success: false, message: '导出失败' }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+      }
+
+      // 导入数据API
+      if (pathname === '/admin/api/import' && request.method === 'POST') {
+        if (!user) {
+          return new Response('Unauthorized', { status: 401 });
+        }
+
+        try {
+          const data = await request.json();
+          
+          // 验证数据格式
+          if (!data.subscriptions && !data.config) {
+            return new Response(JSON.stringify({ success: false, message: '无效的数据格式' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' }
+            });
+          }
+
+          // 导入订阅数据
+          if (data.subscriptions && Array.isArray(data.subscriptions)) {
+            // 验证订阅数据
+            for (const subscription of data.subscriptions) {
+              if (!subscription.name || !subscription.expiryDate) {
+                return new Response(JSON.stringify({ success: false, message: '订阅数据格式错误' }), {
+                  status: 400,
+                  headers: { 'Content-Type': 'application/json' }
+                });
+              }
+              
+              // 清理和验证输入
+              subscription.name = sanitizeInput(subscription.name, 100);
+              subscription.notes = sanitizeInput(subscription.notes || '', 500);
+              subscription.customType = sanitizeInput(subscription.customType || '', 50);
+            }
+            
+            await env.SUBSCRIPTIONS_KV.put('subscriptions', JSON.stringify(data.subscriptions));
+            console.log(`[导入] 成功导入 ${data.subscriptions.length} 个订阅`);
+          }
+
+          // 导入配置（排除敏感信息）
+          if (data.config && typeof data.config === 'object') {
+            const currentConfig = await getConfig(env);
+            const { JWT_SECRET, ADMIN_PASSWORD, ADMIN_USERNAME, ...importConfig } = data.config;
+            
+            const mergedConfig = { 
+              ...currentConfig, 
+              ...importConfig
+            };
+            
+            await env.SUBSCRIPTIONS_KV.put('config', JSON.stringify(mergedConfig));
+            console.log('[导入] 配置导入成功');
+          }
+
+          return new Response(JSON.stringify({ success: true, message: '导入成功' }), {
+            headers: { 'Content-Type': 'application/json' }
+          });
+        } catch (error) {
+          console.error('[导入] 导入数据失败:', error);
+          return new Response(JSON.stringify({ success: false, message: '导入失败: ' + error.message }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+      }
+
+      // 统计信息API
+      if (pathname === '/admin/api/statistics' && request.method === 'GET') {
+        if (!user) {
+          return new Response('Unauthorized', { status: 401 });
+        }
+
+        try {
+          const subscriptions = await getAllSubscriptions(env);
+          const now = new Date();
+          
+          const activeSubscriptions = subscriptions.filter(s => s.isActive);
+          const expiredSubscriptions = subscriptions.filter(s => new Date(s.expiryDate) < now);
+          const expiringSoon = subscriptions.filter(s => {
+            const expiryDate = new Date(s.expiryDate);
+            const daysUntil = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+            return daysUntil <= 7 && daysUntil >= 0;
+          });
+          
+          // 按类型统计
+          const typeStats = {};
+          subscriptions.forEach(sub => {
+            const type = sub.customType || '默认';
+            typeStats[type] = (typeStats[type] || 0) + 1;
+          });
+          
+          // 按月份统计到期订阅
+          const monthlyExpiry = {};
+          subscriptions.forEach(sub => {
+            const expiryDate = new Date(sub.expiryDate);
+            const monthKey = `${expiryDate.getFullYear()}-${(expiryDate.getMonth() + 1).toString().padStart(2, '0')}`;
+            monthlyExpiry[monthKey] = (monthlyExpiry[monthKey] || 0) + 1;
+          });
+          
+          const statistics = {
+            total: subscriptions.length,
+            active: activeSubscriptions.length,
+            inactive: subscriptions.length - activeSubscriptions.length,
+            expired: expiredSubscriptions.length,
+            expiringSoon: expiringSoon.length,
+            typeStats: typeStats,
+            monthlyExpiry: monthlyExpiry,
+            lastUpdated: new Date().toISOString()
+          };
+
+          return new Response(JSON.stringify(statistics), {
+            headers: { 'Content-Type': 'application/json' }
+          });
+        } catch (error) {
+          console.error('[统计] 获取统计信息失败:', error);
+          return new Response(JSON.stringify({ success: false, message: '获取统计信息失败' }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+      }
+
       return new Response(adminPage, {
         headers: { 'Content-Type': 'text/html; charset=utf-8' }
       });
@@ -2351,17 +3092,50 @@ const api = {
     const config = await getConfig(env);
 
     if (path === '/login' && method === 'POST') {
-      const body = await request.json();
+      // 获取客户端IP进行速率限制
+      const clientIP = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || 'unknown';
+      
+      // 检查速率限制（每分钟最多5次登录尝试）
+      if (!checkRateLimit(`login_${clientIP}`, 5, 60000)) {
+        return new Response(
+          JSON.stringify({ success: false, message: '登录尝试过于频繁，请稍后再试' }),
+          { 
+            status: 429,
+            headers: { 'Content-Type': 'application/json' } 
+          }
+        );
+      }
 
-      if (body.username === config.ADMIN_USERNAME && body.password === config.ADMIN_PASSWORD) {
-        const token = await generateJWT(body.username, config.JWT_SECRET);
+      const body = await request.json();
+      
+      // 输入验证
+      if (!body.username || !body.password) {
+        return new Response(
+          JSON.stringify({ success: false, message: '用户名和密码不能为空' }),
+          { headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      // 清理输入
+      const username = sanitizeInput(body.username, 50);
+      const password = body.password; // 密码不需要HTML转义，但需要长度限制
+      
+      if (password.length > 100) {
+        return new Response(
+          JSON.stringify({ success: false, message: '密码长度超出限制' }),
+          { headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (username === config.ADMIN_USERNAME && password === config.ADMIN_PASSWORD) {
+        const token = await generateJWT(username, config.JWT_SECRET);
 
         return new Response(
           JSON.stringify({ success: true }),
           {
             headers: {
               'Content-Type': 'application/json',
-              'Set-Cookie': 'token=' + token + '; HttpOnly; Path=/; SameSite=Strict; Max-Age=86400'
+              'Set-Cookie': 'token=' + token + '; HttpOnly; Path=/; SameSite=Strict; Max-Age=86400; Secure'
             }
           }
         );
@@ -2429,6 +3203,17 @@ const api = {
           };
 
           if (newConfig.ADMIN_PASSWORD) {
+            // 验证新密码强度
+            const passwordValidation = validatePassword(newConfig.ADMIN_PASSWORD);
+            if (!passwordValidation.isValid) {
+              return new Response(
+                JSON.stringify({ 
+                  success: false, 
+                  message: '密码不符合安全要求：' + passwordValidation.errors.join('，')
+                }),
+                { status: 400, headers: { 'Content-Type': 'application/json' } }
+              );
+            }
             updatedConfig.ADMIN_PASSWORD = newConfig.ADMIN_PASSWORD;
           }
 
@@ -2549,6 +3334,18 @@ const api = {
       }
 
       if (method === 'POST') {
+        // 速率限制检查
+        const clientIP = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || 'unknown';
+        if (!checkRateLimit(`api_${clientIP}`, 20, 60000)) {
+          return new Response(
+            JSON.stringify({ success: false, message: '请求过于频繁，请稍后再试' }),
+            { 
+              status: 429,
+              headers: { 'Content-Type': 'application/json' } 
+            }
+          );
+        }
+        
         const subscription = await request.json();
         const result = await createSubscription(subscription, env);
 
@@ -2685,6 +3482,112 @@ function generateRandomSecret() {
   return result;
 }
 
+// 生成随机字符串
+function generateRandomString(length) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+// 生成符合安全要求的默认密码
+function generateSecureDefaultPassword() {
+  const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const lower = 'abcdefghijklmnopqrstuvwxyz';
+  const numbers = '0123456789';
+  const special = '!@#$%^&*';
+  
+  let password = '';
+  
+  // 确保至少包含每种类型的字符
+  password += upper.charAt(Math.floor(Math.random() * upper.length));
+  password += lower.charAt(Math.floor(Math.random() * lower.length));
+  password += numbers.charAt(Math.floor(Math.random() * numbers.length));
+  password += special.charAt(Math.floor(Math.random() * special.length));
+  
+  // 剩余字符随机生成
+  const allChars = upper + lower + numbers + special;
+  for (let i = 4; i < 12; i++) {
+    password += allChars.charAt(Math.floor(Math.random() * allChars.length));
+  }
+  
+  // 打乱密码字符顺序
+  return password.split('').sort(() => Math.random() - 0.5).join('');
+}
+
+// 密码强度验证
+function validatePassword(password) {
+  const errors = [];
+  
+  if (password.length < 8) {
+    errors.push('密码长度至少8个字符');
+  }
+  if (!/[a-z]/.test(password)) {
+    errors.push('密码必须包含小写字母');
+  }
+  if (!/[A-Z]/.test(password)) {
+    errors.push('密码必须包含大写字母');
+  }
+  if (!/\d/.test(password)) {
+    errors.push('密码必须包含数字');
+  }
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    errors.push('密码必须包含特殊字符');
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors: errors
+  };
+}
+
+// XSS防护 - HTML转义
+function escapeHtml(unsafe) {
+  if (typeof unsafe !== 'string') return unsafe;
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
+    .replace(/\//g, "&#x2F;");
+}
+
+// 输入验证和清理
+function sanitizeInput(input, maxLength = 1000) {
+  if (typeof input !== 'string') return '';
+  return escapeHtml(input.trim().slice(0, maxLength));
+}
+
+// 速率限制存储（内存中，重启后重置）
+const rateLimiter = new Map();
+
+// 速率限制检查
+function checkRateLimit(clientId, maxRequests = 10, windowMs = 60000) {
+  const now = Date.now();
+  const windowStart = now - windowMs;
+  
+  if (!rateLimiter.has(clientId)) {
+    rateLimiter.set(clientId, []);
+  }
+  
+  const requests = rateLimiter.get(clientId);
+  // 清理过期请求
+  const validRequests = requests.filter(timestamp => timestamp > windowStart);
+  rateLimiter.set(clientId, validRequests);
+  
+  if (validRequests.length >= maxRequests) {
+    return false;
+  }
+  
+  // 记录新请求
+  validRequests.push(now);
+  rateLimiter.set(clientId, validRequests);
+  return true;
+}
+
 async function getConfig(env) {
   try {
     if (!env.SUBSCRIPTIONS_KV) {
@@ -2710,7 +3613,7 @@ async function getConfig(env) {
 
     const finalConfig = {
       ADMIN_USERNAME: config.ADMIN_USERNAME || 'admin',
-      ADMIN_PASSWORD: config.ADMIN_PASSWORD || 'password',
+      ADMIN_PASSWORD: config.ADMIN_PASSWORD || generateSecureDefaultPassword(),
       JWT_SECRET: jwtSecret,
       TG_BOT_TOKEN: config.TG_BOT_TOKEN || '',
       TG_CHAT_ID: config.TG_CHAT_ID || '',
@@ -2764,7 +3667,13 @@ async function getConfig(env) {
 
 async function generateJWT(username, secret) {
   const header = { alg: 'HS256', typ: 'JWT' };
-  const payload = { username, iat: Math.floor(Date.now() / 1000) };
+  const now = Math.floor(Date.now() / 1000);
+  const payload = { 
+    username, 
+    iat: now,
+    exp: now + 86400, // 24小时过期
+    jti: generateRandomString(16) // JWT ID，防止重放攻击
+  };
 
   const headerBase64 = btoa(JSON.stringify(header));
   const payloadBase64 = btoa(JSON.stringify(payload));
@@ -2772,7 +3681,7 @@ async function generateJWT(username, secret) {
   const signatureInput = headerBase64 + '.' + payloadBase64;
   const signature = await CryptoJS.HmacSHA256(signatureInput, secret);
 
-  return headerBase64 + '.' + payloadBase64 + '.' + signature;
+  return headerBase64 + '.' + payloadBase64 + '.' + signature.toString();
 }
 
 async function verifyJWT(token, secret) {
@@ -2791,14 +3700,29 @@ async function verifyJWT(token, secret) {
     const [headerBase64, payloadBase64, signature] = parts;
     const signatureInput = headerBase64 + '.' + payloadBase64;
     const expectedSignature = await CryptoJS.HmacSHA256(signatureInput, secret);
-
-    if (signature !== expectedSignature) {
+    
+    // 验证签名
+    if (signature !== expectedSignature.toString()) {
       console.log('[JWT] 签名验证失败');
       return null;
     }
-
+    
+    // 解析payload并检查过期时间
     const payload = JSON.parse(atob(payloadBase64));
-    console.log('[JWT] 验证成功，用户:', payload.username);
+    const now = Math.floor(Date.now() / 1000);
+    
+    // 检查token是否过期 (24小时过期)
+    if (payload.exp && payload.exp < now) {
+      console.log('[JWT] Token已过期');
+      return null;
+    }
+    
+    // 检查token是否过旧 (如果没有exp，使用iat + 24小时)
+    if (!payload.exp && payload.iat && (now - payload.iat) > 86400) {
+      console.log('[JWT] Token过旧，需要重新登录');
+      return null;
+    }
+    
     return payload;
   } catch (error) {
     console.error('[JWT] 验证过程出错:', error);
@@ -2828,10 +3752,28 @@ async function createSubscription(subscription, env) {
     if (!subscription.name || !subscription.expiryDate) {
       return { success: false, message: '缺少必填字段' };
     }
+    
+    // 输入验证和XSS防护
+    const name = sanitizeInput(subscription.name, 100);
+    const customType = sanitizeInput(subscription.customType || '', 50);
+    const notes = sanitizeInput(subscription.notes || '', 500);
+    
+    if (!name.trim()) {
+      return { success: false, message: '订阅名称不能为空' };
+    }
 
     let expiryDate = new Date(subscription.expiryDate);
+    if (isNaN(expiryDate.getTime())) {
+      return { success: false, message: '无效的到期日期' };
+    }
+    
     const now = new Date();
     
+    // 验证周期值
+    const periodValue = parseInt(subscription.periodValue) || 1;
+    const periodUnit = ['day', 'month', 'year'].includes(subscription.periodUnit) 
+      ? subscription.periodUnit : 'month';
+    const reminderDays = Math.max(0, Math.min(365, parseInt(subscription.reminderDays) || 7));
 
     let useLunar = !!subscription.useLunar;
     if (useLunar) {
@@ -2841,24 +3783,24 @@ async function createSubscription(subscription, env) {
         expiryDate.getDate()
       );
       
-      if (lunar && subscription.periodValue && subscription.periodUnit) {
+      if (lunar && periodValue && periodUnit) {
         // 如果到期日<=今天，自动推算到下一个周期
         while (expiryDate <= now) {
-          lunar = lunarBiz.addLunarPeriod(lunar, subscription.periodValue, subscription.periodUnit);
+          lunar = lunarBiz.addLunarPeriod(lunar, periodValue, periodUnit);
           const solar = lunarBiz.lunar2solar(lunar);
           expiryDate = new Date(solar.year, solar.month - 1, solar.day);
         }
         subscription.expiryDate = expiryDate.toISOString();
       }
     } else {
-      if (expiryDate < now && subscription.periodValue && subscription.periodUnit) {
+      if (expiryDate < now && periodValue && periodUnit) {
         while (expiryDate < now) {
-          if (subscription.periodUnit === 'day') {
-            expiryDate.setDate(expiryDate.getDate() + subscription.periodValue);
-          } else if (subscription.periodUnit === 'month') {
-            expiryDate.setMonth(expiryDate.getMonth() + subscription.periodValue);
-          } else if (subscription.periodUnit === 'year') {
-            expiryDate.setFullYear(expiryDate.getFullYear() + subscription.periodValue);
+          if (periodUnit === 'day') {
+            expiryDate.setDate(expiryDate.getDate() + periodValue);
+          } else if (periodUnit === 'month') {
+            expiryDate.setMonth(expiryDate.getMonth() + periodValue);
+          } else if (periodUnit === 'year') {
+            expiryDate.setFullYear(expiryDate.getFullYear() + periodValue);
           }
         }
         subscription.expiryDate = expiryDate.toISOString();
@@ -2867,17 +3809,17 @@ async function createSubscription(subscription, env) {
 
     const newSubscription = {
       id: Date.now().toString(),
-      name: subscription.name,
-      customType: subscription.customType || '',
+      name: name,
+      customType: customType,
       startDate: subscription.startDate || null,
       expiryDate: subscription.expiryDate,
-      periodValue: subscription.periodValue || 1,
-      periodUnit: subscription.periodUnit || 'month',
-      reminderDays: subscription.reminderDays !== undefined ? subscription.reminderDays : 7,
-      notes: subscription.notes || '',
+      periodValue: periodValue,
+      periodUnit: periodUnit,
+      reminderDays: reminderDays,
+      notes: notes,
       isActive: subscription.isActive !== false,
       autoRenew: subscription.autoRenew !== false,
-      useLunar: useLunar, // 新增
+      useLunar: useLunar,
       createdAt: new Date().toISOString()
     };
 
