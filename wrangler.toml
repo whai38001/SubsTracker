@@ -2,12 +2,20 @@ name = "subscription-manager"
 main = "index.js"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+# 内存限制
+limits = { cpu_ms = 50 }
 
 [env.production]
-name = "subscription-manager"
+name = "subscription-manager-prod"
+route = { pattern = "your-domain.com/*", zone_name = "your-domain.com" }
 
 [env.staging]
 name = "subscription-manager-staging"
+
+[env.development]
+name = "subscription-manager-dev"
 
 # KV 命名空间配置
 [[kv_namespaces]]
@@ -19,6 +27,25 @@ id = "your-production-kv-namespace-id"
 [triggers]
 crons = ["0 8 * * *"]
 
-# 环境变量（可选，也可以在 Cloudflare Dashboard 中设置）
+# 环境变量
 [vars]
 ENVIRONMENT = "production"
+LOG_LEVEL = "info"
+
+# 安全相关配置
+[env.production.vars]
+SECURITY_HEADERS_ENABLED = "true"
+RATE_LIMIT_ENABLED = "true"
+
+[env.staging.vars]  
+SECURITY_HEADERS_ENABLED = "true"
+RATE_LIMIT_ENABLED = "false"
+
+[env.development.vars]
+SECURITY_HEADERS_ENABLED = "false" 
+RATE_LIMIT_ENABLED = "false"
+LOG_LEVEL = "debug"
+
+# 部署配置
+[deploy]
+compatibility_date = "2024-01-01"
